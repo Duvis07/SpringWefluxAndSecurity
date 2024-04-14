@@ -26,24 +26,28 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public Mono<TokenDto> login(LoginDto dto) {
-        return userRepository.findByUsernameOrEmail(dto.getUsername(), dto.getUsername())
-                .filter(user -> passwordEncoder.matches(dto.getPassword(), user.getPassword()))
-                .map(user -> new TokenDto(jwtProvider.generateToken(user)))
-                .switchIfEmpty(Mono.error(new CustomException(HttpStatus.BAD_REQUEST, "bad credentials")));
+    public Mono < TokenDto > login ( LoginDto dto ) {
+        return userRepository.findByUsernameOrEmail ( dto.getUsername ( ) , dto.getUsername ( ) )
+                .filter ( user -> passwordEncoder.matches ( dto.getPassword ( ) , user.getPassword ( ) ) )
+                .map ( user -> new TokenDto ( jwtProvider.generateToken ( user ) ) )
+                .switchIfEmpty ( Mono.error ( new CustomException ( HttpStatus.BAD_REQUEST , "bad credentials" ) ) );
     }
 
-    public Mono< User > create( CreateUserDto dto) {
-        User user = User.builder()
-                .username(dto.getUsername())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .roles( Role.ROLE_USER.name())
-                .build();
-        Mono<Boolean> userExists = userRepository.findByUsernameOrEmail(user.getUsername(), user.getEmail()).hasElement();
+    public Mono < User > create ( CreateUserDto dto ) {
+        Role role = dto.getRole ( ).equalsIgnoreCase ( "admin" ) ? Role.ROLE_ADMIN : Role.ROLE_USER;
+
+        User user = User.builder ( )
+                .username ( dto.getUsername ( ) )
+                .email ( dto.getEmail ( ) )
+                .password ( passwordEncoder.encode ( dto.getPassword ( ) ) )
+                .roles ( role.name ( ) )
+                .build ( );
+
+        Mono < Boolean > userExists = userRepository.findByUsernameOrEmail ( user.getUsername ( ) , user.getEmail ( ) ).hasElement ( );
         return userExists
-                .flatMap(exists -> exists ?
-                        Mono.error(new CustomException(HttpStatus.BAD_REQUEST, "username or email already in use"))
-                        : userRepository.save(user));
+                .flatMap ( exists -> exists ?
+                        Mono.error ( new CustomException ( HttpStatus.BAD_REQUEST , "username or email already in use" ) )
+                        : userRepository.save ( user ) );
     }
+
 }

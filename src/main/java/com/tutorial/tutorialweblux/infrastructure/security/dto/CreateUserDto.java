@@ -18,4 +18,6 @@ public class CreateUserDto {
     private String email;
     @NotBlank(message = "password is mandatory")
     private String password;
+    @NotBlank(message = "role is mandatory")
+    private String role;
 }
